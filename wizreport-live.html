@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>HockeyWiz TTS — Proof of Concept</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    background: #0b0e14;
+    color: #e8ecf1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    max-width: 720px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .sub { color: #8b93a3; margin-bottom: 24px; }
+  textarea {
+    width: 100%;
+    min-height: 220px;
+    background: #131722;
+    color: #e8ecf1;
+    border: 1px solid #262c3d;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+  }
+  .row { display: flex; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+  button {
+    background: #3d7bff;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+  button:disabled { background: #2a3350; cursor: not-allowed; }
+  button.secondary { background: #262c3d; }
+  #status { color: #8b93a3; font-size: 0.9rem; }
+  #cleanedPreview {
+    margin-top: 20px;
+    background: #131722;
+    border: 1px solid #262c3d;
+    border-radius: 8px;
+    padding: 12px;
+    white-space: pre-wrap;
+    font-size: 0.9rem;
+    color: #b6bccb;
+    display: none;
+  }
+  audio { width: 100%; margin-top: 16px; display: none; }
+</style>
+</head>
+<body>
+  <h1>🏒 HockeyWiz TTS — Local Proof of Concept</h1>
+  <div class="sub">Paste an article below, or use the sample. Click "Speak" to hear it narrated.</div>
+
+  <textarea id="articleText">Viggo Björck is leaving the SHL to pursue NHL opportunities with the Winnipeg Jets. He shared his plans with Djurgården late last week, receiving their blessing, and is expected to sign his entry-level contract with Winnipeg shortly.
+
+(Photo by Colby Spence/Illegal Curve)
+
+Björck is not only expected to make the Jets' roster, he's going to be given every opportunity to start the season as Winnipeg's second-line centre.
+
+GP: 42 | G: 6 | A: 9
+
+Related: Winnipeg Jets prospect rankings for 2026
+Share this article on social media</textarea>
+
+  <div class="row">
+    <button id="speakBtn">▶ Speak</button>
+    <button id="previewBtn" class="secondary">Preview cleaned text</button>
+    <span id="status"></span>
+  </div>
+
+  <pre id="cleanedPreview"></pre>
+  <audio id="player" controls></audio>
+
+  <script>
+    const API_BASE = "http://localhost:3001";
+    const textEl = document.getElementById("articleText");
+    const statusEl = document.getElementById("status");
+    const speakBtn = document.getElementById("speakBtn");
+    const previewBtn = document.getElementById("previewBtn");
+    const previewEl = document.getElementById("cleanedPreview");
+    const player = document.getElementById("player");
+
+    previewBtn.addEventListener("click", async () => {
+      statusEl.textContent = "Cleaning text...";
+      try {
+        const res = await fetch(`${API_BASE}/api/preprocess`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: textEl.value }),
+        });
+        const data = await res.json();
+        previewEl.textContent = data.cleaned || data.error;
+        previewEl.style.display = "block";
+        statusEl.textContent = "";
+      } catch (err) {
+        statusEl.textContent = "Error: is the server running? (npm start)";
+      }
+    });
+
+    speakBtn.addEventListener("click", async () => {
+      speakBtn.disabled = true;
+      statusEl.textContent = "Generating audio...";
+      player.style.display = "none";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/speak`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: textEl.value }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Request failed (${res.status})`);
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        player.src = url;
+        player.style.display = "block";
+        player.play();
+        statusEl.textContent = "Playing.";
+      } catch (err) {
+        statusEl.textContent = `Error: ${err.message}`;
+      } finally {
+        speakBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
