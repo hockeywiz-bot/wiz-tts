@@ -2,92 +2,137 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Björck Set to Anchor Jets' Second Line — HockeyWiz</title>
+<title>HockeyWiz TTS — Proof of Concept</title>
 <style>
+  :root { color-scheme: dark; }
   body {
-    background: #05070c;
-    color: #dfe3ee;
-    font-family: Georgia, "Times New Roman", serif;
-    max-width: 700px;
-    margin: 50px auto;
-    padding: 0 20px 80px;
-    line-height: 1.65;
+    background: #0b0e14;
+    color: #e8ecf1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    max-width: 720px;
+    margin: 40px auto;
+    padding: 0 20px;
+    line-height: 1.5;
   }
-  .kicker {
-    font-family: -apple-system, sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 0.75rem;
-    color: #ff4d4f;
-    font-weight: 700;
-    margin-bottom: 8px;
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .sub { color: #8b93a3; margin-bottom: 24px; }
+  textarea {
+    width: 100%;
+    min-height: 220px;
+    background: #131722;
+    color: #e8ecf1;
+    border: 1px solid #262c3d;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
   }
-  h1 {
-    font-size: 2rem;
-    margin: 0 0 6px;
-    line-height: 1.2;
+  .row { display: flex; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+  button {
+    background: #3d7bff;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
   }
-  .byline {
-    font-family: -apple-system, sans-serif;
-    font-size: 0.85rem;
-    color: #8791a8;
-    margin-bottom: 28px;
-  }
-  article p { margin: 0 0 20px; font-size: 1.05rem; }
-  .credit {
-    font-family: -apple-system, sans-serif;
-    font-size: 0.8rem;
-    color: #6b7385;
-    margin: -8px 0 20px;
-  }
-  .stats {
-    font-family: ui-monospace, monospace;
+  button:disabled { background: #2a3350; cursor: not-allowed; }
+  button.secondary { background: #262c3d; }
+  #status { color: #8b93a3; font-size: 0.9rem; }
+  #cleanedPreview {
+    margin-top: 20px;
+    background: #131722;
+    border: 1px solid #262c3d;
+    border-radius: 8px;
+    padding: 12px;
+    white-space: pre-wrap;
     font-size: 0.9rem;
     color: #b6bccb;
-    margin: 0 0 20px;
+    display: none;
   }
-  .related {
-    font-family: -apple-system, sans-serif;
-    font-size: 0.85rem;
-    color: #6b7385;
-    border-top: 1px solid #202840;
-    padding-top: 16px;
-    margin-top: 32px;
-  }
+  audio { width: 100%; margin-top: 16px; display: none; }
 </style>
 </head>
 <body>
+  <h1>🏒 HockeyWiz TTS — Local Proof of Concept</h1>
+  <div class="sub">Paste an article below, or use the sample. Click "Speak" to hear it narrated.</div>
 
-  <div class="kicker">Winnipeg Jets · Prospects</div>
-  <h1>Björck Set to Anchor Jets' Second Line as Rookie</h1>
-  <div class="byline">By HockeyWiz Staff — Updated moments ago</div>
+  <textarea id="articleText">Viggo Björck is leaving the SHL to pursue NHL opportunities with the Winnipeg Jets. He shared his plans with Djurgården late last week, receiving their blessing, and is expected to sign his entry-level contract with Winnipeg shortly.
 
-  <!--
-    This is the only integration step a publisher's engineering team needs:
-    one script tag, pointed at their article container.
-  -->
-  <article>
-    <p>Viggo Björck is leaving the SHL to pursue NHL opportunities with the Winnipeg Jets. He shared his plans with Djurgården late last week, receiving their blessing, and is expected to sign his entry-level contract with Winnipeg shortly.</p>
+(Photo by Colby Spence/Illegal Curve)
 
-    <p class="credit">(Photo by Colby Spence/Illegal Curve)</p>
+Björck is not only expected to make the Jets' roster, he's going to be given every opportunity to start the season as Winnipeg's second-line centre.
 
-    <p>Björck is not only expected to make the Jets' roster. He's going to be given every opportunity to start the season as Winnipeg's second-line centre. Winnipeg's commitment to the 18-year-old is nearly unprecedented, reflecting a partial shift in Jets philosophy and extreme belief in Björck's NHL ability.</p>
+GP: 42 | G: 6 | A: 9
 
-    <p>Will it be worth it? And why do the Jets believe Björck is ready for the opportunity?</p>
+Related: Winnipeg Jets prospect rankings for 2026
+Share this article on social media</textarea>
 
-    <p class="stats">GP: 42 | G: 6 | A: 9</p>
-
-    <p>To answer these questions, one must understand the scope of the challenge ahead of him. Björck is a tremendous prospect with elite hockey sense, but his NHL transition will come with growing pains. The NHL's 84-game schedule will be more physically demanding than anything he's experienced before. His opponents will be bigger, stronger, and faster than what he's used to in the SHL. And the game itself will be different.</p>
-  </article>
-
-  <div class="related">
-    Related: Winnipeg Jets prospect rankings for 2026 · Share this article
+  <div class="row">
+    <button id="speakBtn">▶ Speak</button>
+    <button id="previewBtn" class="secondary">Preview cleaned text</button>
+    <span id="status"></span>
   </div>
 
-  <!-- The embed: one script tag, no build step, no framework. -->
-  <script
-data-api="https://hwiz-tts.onrender.com"
-  ></script>
+  <pre id="cleanedPreview"></pre>
+  <audio id="player" controls></audio>
 
+  <script>
+    const API_BASE = "https://hwiz-tts.onrender.com";
+    const textEl = document.getElementById("articleText");
+    const statusEl = document.getElementById("status");
+    const speakBtn = document.getElementById("speakBtn");
+    const previewBtn = document.getElementById("previewBtn");
+    const previewEl = document.getElementById("cleanedPreview");
+    const player = document.getElementById("player");
+
+    previewBtn.addEventListener("click", async () => {
+      statusEl.textContent = "Cleaning text...";
+      try {
+        const res = await fetch(`${API_BASE}/api/preprocess`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: textEl.value }),
+        });
+        const data = await res.json();
+        previewEl.textContent = data.cleaned || data.error;
+        previewEl.style.display = "block";
+        statusEl.textContent = "";
+      } catch (err) {
+        statusEl.textContent = "Error: is the server running? (npm start)";
+      }
+    });
+
+    speakBtn.addEventListener("click", async () => {
+      speakBtn.disabled = true;
+      statusEl.textContent = "Generating audio...";
+      player.style.display = "none";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/speak`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: textEl.value }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Request failed (${res.status})`);
+        }
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        player.src = url;
+        player.style.display = "block";
+        player.play();
+        statusEl.textContent = "Playing.";
+      } catch (err) {
+        statusEl.textContent = `Error: ${err.message}`;
+      } finally {
+        speakBtn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>
